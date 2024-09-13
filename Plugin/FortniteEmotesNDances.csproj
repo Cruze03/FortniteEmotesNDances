@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>./FortniteEmotesNDances/plugins/FortniteEmotesNDances</OutputPath>
+  </PropertyGroup>
+
+ <ItemGroup>
+    <PackageReference Include="CounterStrikeSharp.API" Version="*" />
+    <Reference Include="CounterStrikeSharp.API">
+       <HintPath>CounterStrikeSharp.API.dll</HintPath>
+	   <PrivateAssets>none</PrivateAssets>
+	   <ExcludeAssets>runtime</ExcludeAssets>
+       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </Reference>
+    <Reference Include="KitsuneMenu">
+      <HintPath>FortniteEmotesNDances/shared/KitsuneMenu/KitsuneMenu.dll</HintPath>
+    </Reference>
+	<ProjectReference Include="..\API\FortniteEmotesNDancesAPI.csproj">
+      <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="lang\**\*.*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  
+</Project>
