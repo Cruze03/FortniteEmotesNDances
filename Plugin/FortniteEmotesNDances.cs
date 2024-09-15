@@ -23,7 +23,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
     public override string ModuleName => "Fortnite Emotes & Dances";
     public override string ModuleDescription => "CS2 Port of Fortnite Emotes & Dances";
     public override string ModuleAuthor => "Cruze";
-    public override string ModuleVersion => "1.0.0";
+    public override string ModuleVersion => "1.0.1";
 
     public required PluginConfig Config { get; set; } = new();
 
@@ -77,6 +77,33 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
                 if(player == null)
                     return;
                 
+                bool bAccess = false;
+                foreach(var permission in Config.EmoteDanceCommandPerm)
+                {
+                    if(string.IsNullOrEmpty(permission))
+                    {
+                        bAccess = true;
+                        break;
+                    }
+                    
+                    if(permission[0] == '@' && AdminManager.PlayerHasPermissions(player, permission))
+                    {
+                        bAccess = true;
+                        break;
+                    }
+                    else if(permission[0] == '#' && AdminManager.PlayerInGroup(player, permission))
+                    {
+                        bAccess = true;
+                        break;
+                    }
+                }
+
+                if(!bAccess)
+                {
+                    player.PrintToChat($" {Localizer["emote.prefix"]} {Localizer["emote.command.no-permission"]}");
+                    return;
+                }
+                
                 if(command.ArgCount == 1)
                 {
                     switch(Config.EmoteMenuType)
@@ -108,7 +135,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
                 {
                     player.PrintToChat(error);
                 }
-            }, CommandUsage.CLIENT_ONLY, permission: Config.EmoteDanceCommandPerm);
+            }, CommandUsage.CLIENT_ONLY);
         }
 
         foreach(var danceCommand in Config.DanceCommand)
@@ -117,6 +144,33 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
             {
                 if(player == null)
                     return;
+                
+                bool bAccess = false;
+                foreach(var permission in Config.EmoteDanceCommandPerm)
+                {
+                    if(string.IsNullOrEmpty(permission))
+                    {
+                        bAccess = true;
+                        break;
+                    }
+                    
+                    if(permission[0] == '@' && AdminManager.PlayerHasPermissions(player, permission))
+                    {
+                        bAccess = true;
+                        break;
+                    }
+                    else if(permission[0] == '#' && AdminManager.PlayerInGroup(player, permission))
+                    {
+                        bAccess = true;
+                        break;
+                    }
+                }
+
+                if(!bAccess)
+                {
+                    player.PrintToChat($" {Localizer["emote.prefix"]} {Localizer["emote.command.no-permission"]}");
+                    return;
+                }
                 
                 if(command.ArgCount == 1)
                 {
@@ -148,15 +202,45 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
                 string error = "";
                 if(!PlayEmote(player, danceObj, ref error))
                 {
-                    player.PrintToChat(error);
+                    if(!string.IsNullOrEmpty(error))
+                        player.PrintToChat(error);
                 }
-            }, CommandUsage.CLIENT_ONLY, permission: Config.EmoteDanceCommandPerm);
+            }, CommandUsage.CLIENT_ONLY);
         }
 
         foreach(var setemotecommand in Config.AdminSetEmoteCommand)
         {
             RegisterCommand(setemotecommand, "Set emote to player", (CCSPlayerController? player, CommandInfo command) =>
             {
+                if(player != null)
+                {
+                    bool bAccess = false;
+                    foreach(var permission in Config.AdminSetEmoteDanceCommandPerm)
+                    {
+                        if(string.IsNullOrEmpty(permission))
+                        {
+                            bAccess = true;
+                            break;
+                        }
+                        
+                        if(permission[0] == '@' && AdminManager.PlayerHasPermissions(player, permission))
+                        {
+                            bAccess = true;
+                            break;
+                        }
+                        else if(permission[0] == '#' && AdminManager.PlayerInGroup(player, permission))
+                        {
+                            bAccess = true;
+                            break;
+                        }
+                    }
+                    if(!bAccess)
+                    {
+                        player.PrintToChat($" {Localizer["emote.prefix"]} {Localizer["emote.command.no-permission"]}");
+                        return;
+                    }
+                }
+                
                 if(command.ArgCount != 3)
                 {
                     command.ReplyToCommand($" {Localizer["emote.prefix"]} {Localizer["emote.setemote-usage", setemotecommand]}");
@@ -197,13 +281,42 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
                     command.ReplyToCommand($" {Localizer["emote.prefix"]} {Localizer[$"emote.played-emote-on-target", count]}");
                 else
                     command.ReplyToCommand($" {Localizer["emote.prefix"]} {Localizer[$"emote.failplayed-emote-on-target"]}");
-            }, CommandUsage.CLIENT_AND_SERVER, permission: Config.AdminSetEmoteDanceCommandPerm);
+            }, CommandUsage.CLIENT_AND_SERVER);
         }
 
         foreach(var setdancecommand in Config.AdminSetDanceCommand)
         {
             RegisterCommand(setdancecommand, "Set dance to player", (CCSPlayerController? player, CommandInfo command) =>
             {
+                if(player != null)
+                {
+                    bool bAccess = false;
+                    foreach(var permission in Config.AdminSetEmoteDanceCommandPerm)
+                    {
+                        if(string.IsNullOrEmpty(permission))
+                        {
+                            bAccess = true;
+                            break;
+                        }
+                        
+                        if(permission[0] == '@' && AdminManager.PlayerHasPermissions(player, permission))
+                        {
+                            bAccess = true;
+                            break;
+                        }
+                        else if(permission[0] == '#' && AdminManager.PlayerInGroup(player, permission))
+                        {
+                            bAccess = true;
+                            break;
+                        }
+                    }
+                    if(!bAccess)
+                    {
+                        player.PrintToChat($" {Localizer["emote.prefix"]} {Localizer["emote.command.no-permission"]}");
+                        return;
+                    }
+                }
+                
                 if(command.ArgCount != 3)
                 {
                     command.ReplyToCommand($" {Localizer["emote.prefix"]} {Localizer["emote.setdance-usage", setdancecommand]}");
@@ -244,7 +357,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
                     command.ReplyToCommand($" {Localizer["emote.prefix"]} {Localizer[$"emote.played-dance-on-target", count]}");
                 else
                     command.ReplyToCommand($" {Localizer["emote.prefix"]} {Localizer[$"emote.failplayed-dance-on-target"]}");
-            }, CommandUsage.CLIENT_AND_SERVER, permission: Config.AdminSetEmoteDanceCommandPerm);
+            }, CommandUsage.CLIENT_AND_SERVER);
         }
 
         var buttons = Config.EmoteCancelButtons.Split(',');
@@ -292,6 +405,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
 
         Menu_OnLoad();
         API_OnLoad();
+        Transmit_OnLoad();
 
         if(hotReload)
         {
@@ -306,6 +420,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
         StopAllEmotes();
 
         RemoveAllCommands();
+        Transmit_OnUnload();
 
         RemoveListener<Listeners.OnMapStart>(OnMapStart);
         RemoveListener<Listeners.OnTick>(OnTick);
@@ -362,8 +477,52 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
         {
             if(trigger.Value.Any(message.Equals))
             {
-                bool hasPerm = (string.IsNullOrEmpty(Config.EmoteDanceCommandPerm) || AdminManager.PlayerHasPermissions(player, Config.EmoteDanceCommandPerm))
-                && (string.IsNullOrEmpty(trigger.Key.Permission) || AdminManager.PlayerHasPermissions(player, trigger.Key.Permission));
+                bool hasPerm = false;
+                foreach(var permission in Config.EmoteDanceCommandPerm)
+                {
+                    if(string.IsNullOrEmpty(permission))
+                    {
+                        hasPerm = true;
+                        break;
+                    }
+                    
+                    if(permission[0] == '@' && AdminManager.PlayerHasPermissions(player, permission))
+                    {
+                        hasPerm = true;
+                        break;
+                    }
+                    else if(permission[0] == '#' && AdminManager.PlayerInGroup(player, permission))
+                    {
+                        hasPerm = true;
+                        break;
+                    }
+                }
+                if(!hasPerm)
+                {
+                    player.PrintToChat($" {Localizer["emote.prefix"]} {Localizer["emote.no-access"]}");
+                    return HookResult.Stop;
+                }
+                    
+                hasPerm = false;
+                foreach(var permission in trigger.Key.Permission)
+                {
+                    if(string.IsNullOrEmpty(permission))
+                    {
+                        hasPerm = true;
+                        break;
+                    }
+                    
+                    if(permission[0] == '@' && AdminManager.PlayerHasPermissions(player, permission))
+                    {
+                        hasPerm = true;
+                        break;
+                    }
+                    else if(permission[0] == '#' && AdminManager.PlayerInGroup(player, permission))
+                    {
+                        hasPerm = true;
+                        break;
+                    }
+                }
 
                 if(!hasPerm)
                 {
@@ -374,7 +533,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
                 string error = "";
                 if(!PlayEmote(player, trigger.Key, ref error))
                 {
-                    player.PrintToChat(error);
+                    if(!string.IsNullOrEmpty(error))
+                        player.PrintToChat(error);
                 }
                 return HookResult.Stop;
             }

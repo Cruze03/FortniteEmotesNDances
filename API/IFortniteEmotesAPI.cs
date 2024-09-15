@@ -37,7 +37,7 @@ public class Emote
     public float SetToDefaultAnimationDuration { get; set; } = -1;
 
     [JsonPropertyName("Permission")]
-    public string Permission { get; set; } = "";
+    public List<string> Permission { get; set; } = new(){""};
 
     [JsonPropertyName("Trigger")]
     public List<string> Trigger { get; set; } = new() {"emote", "emotes"};
@@ -48,7 +48,15 @@ public class Emote
 /// </summary>
 public interface IFortniteEmotesAPI
 {
-	/// <summary>
+	delegate HookResult OnPlayerEmoteFunc(CCSPlayerController player, Emote emote);
+    
+    /// <summary>
+    /// Is called when a player tries to play an emote/dance
+    /// </summary>
+    /// <param name="handler">Forward when emote/dance is about to be played</param>
+    public HookResult OnPlayerEmote(CCSPlayerController player, Emote emote);
+    
+    /// <summary>
     /// if emote is unable to be played, will return false
     /// and error will have the reason.
     /// </summary>

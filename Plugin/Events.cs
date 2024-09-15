@@ -61,7 +61,6 @@ public partial class Plugin
         {
             Server.NextWorldUpdate(()=> 
             {
-                SetPlayerVisible(player);
                 if(Config.EmoteMenuType == 2 && Menu.GetMenus(player) != null && Menu.GetMenus(player)?.Count > 0)
                     SetPlayerMoveType(player, MoveType_t.MOVETYPE_OBSOLETE);
             });

@@ -23,6 +23,7 @@ public partial class Plugin
     {
         public uint CloneModelIndex { get; set; } = 0;
         public uint EmoteModelIndex { get; set; } = 0;
+        public int PlayerAlpha { get; set; } = 255;
         public CDynamicProp? CameraProp { get; set; } = null;
         public CDynamicProp? AnimProp { get; set; } = null;
         public uint CameraPropIndex { get; set; } = 0;
@@ -38,6 +39,7 @@ public partial class Plugin
             CloneModelIndex = 0;
             AnimProp = null;
             EmoteModelIndex = 0;
+            PlayerAlpha = 255;
             CameraProp = null;
             CameraPropIndex = 0;
             Cooldown = 0;
@@ -53,6 +55,7 @@ public partial class Plugin
             AnimProp = null;
             CloneModelIndex = 0;
             EmoteModelIndex = 0;
+            PlayerAlpha = 255;
             CameraProp = null;
             CameraPropIndex = 0;
             IsDancing = false;
@@ -116,6 +119,22 @@ public partial class Plugin
         if(!target.PlayerPawn.Value.OnGroundLastTick)
         {
             error = $" {Localizer["emote.prefix"]} {Localizer[$"emote{(player == null ? "":".player")}.groundcheck"]}";
+            return false;
+        }
+
+        var result = FortniteEmotesApi.OnPlayerEmote(target, emote);
+        if(result == HookResult.Handled || result == HookResult.Stop)
+        {
+            string message = $"{Localizer[$"emote.stoppedbyapi"]}";
+            
+            if(string.IsNullOrEmpty(message))
+            {
+                error = "";
+            }
+            else
+            {
+                error = $" {Localizer["emote.prefix"]} {Localizer[$"emote.stoppedbyapi"]}";
+            }
             return false;
         }
 
@@ -210,7 +229,29 @@ public partial class Plugin
         });
 
         if(player == null)
-            g_PlayerSettings[steamID].Cooldown = time + (AdminManager.PlayerHasPermissions(target, Config.VIPPerm) ? Config.EmoteVIPCooldown : Config.EmoteCooldown);
+        {
+            bool hasVIP = false;
+            foreach(var perm in Config.VIPPerm)
+            {
+                if(string.IsNullOrEmpty(perm))
+                {
+                    hasVIP = true;
+                    break;
+                }
+                if(perm[0] == '@' && AdminManager.PlayerHasPermissions(target, perm))
+                {
+                    hasVIP = true;
+                    break;
+                }
+                else if(perm[0] == '#' && AdminManager.PlayerInGroup(target, perm))
+                {
+                    hasVIP = true;
+                    break;
+                }
+            }
+            
+            g_PlayerSettings[steamID].Cooldown = time + (hasVIP ? Config.EmoteVIPCooldown : Config.EmoteCooldown);
+        }
         
         string emoteName = $"{Localizer[$"{emote.Name}"]}";
         
@@ -281,6 +322,9 @@ public partial class Plugin
 
         Server.NextWorldUpdate(() =>
         {
+            var steamID = player.SteamID;
+            if(g_PlayerSettings.ContainsKey(steamID))
+                g_PlayerSettings[steamID].PlayerAlpha = player.PlayerPawn.Value!.Render.A;
             SetPlayerInvisible(player);
         });
         return clone;
@@ -333,6 +377,24 @@ public partial class Plugin
 
     public bool IsReadyForDancing(CCSPlayerController player)
     {
+        switch(Config.EmoteAllowedPeriod)
+        {
+            case 1:
+                if(g_GameRules == null || (!g_GameRules.WarmupPeriod && !g_GameRules.FreezePeriod))
+                {
+                    return false;
+                }
+                break;
+            case 2:
+                if(g_GameRules == null || (!g_GameRules.WarmupPeriod && !g_GameRules.FreezePeriod && !g_bRoundEnd))
+                {
+                    return false;
+                }
+                break;
+            default:
+                break;
+        }
+        
         if(!player.IsValidPlayer() || !player.PlayerPawn.IsValidPawnAlive())
             return false;
         
@@ -428,34 +490,32 @@ public partial class Plugin
         && ((settings.EmoteModelIndex != 0 && p.Index == settings.EmoteModelIndex) || (settings.CloneModelIndex != 0 && p.Index == settings.CloneModelIndex) || (settings.CameraPropIndex != 0 && p.Index == settings.CameraPropIndex))
         ).ToList();
 
-        if(player.IsValidPlayer())
+        ResetCam(player);
+
+        SetPlayerWeaponVisible(player);
+
+        if(!Config.SmoothCamera)
         {
-            ResetCam(player);
-
-            SetPlayerWeaponVisible(player);
-
-            if(!Config.SmoothCamera)
-            {
-                SetPlayerEffects(player, false);
-            }
-            else
-            {
-                SetPlayerVisible(player);
-                if(Config.EmoteMenuType != 2 || (Config.EmoteMenuType == 2 && (Menu.GetMenus(player) == null || Menu.GetMenus(player)?.Count <= 0)))
-                    SetPlayerMoveType(player, MoveType_t.MOVETYPE_WALK);
-            }
-
-            var activeWeapon = player.PlayerPawn.Value!.WeaponServices!.ActiveWeapon.Value;
-
-            if(activeWeapon != null && activeWeapon.IsValid)
-            {
-                activeWeapon.NextPrimaryAttackTick = -1;
-                Utilities.SetStateChanged(activeWeapon, "CBasePlayerWeapon", "m_nNextPrimaryAttackTick");
-                activeWeapon.NextSecondaryAttackTick = -1;
-                Utilities.SetStateChanged(activeWeapon, "CBasePlayerWeapon", "m_nNextSecondaryAttackTick");
-            }
+            SetPlayerEffects(player, false);
+        }
+        else
+        {
+            SetPlayerVisible(player);
+            if(Config.EmoteMenuType != 2 || (Config.EmoteMenuType == 2 && (Menu.GetMenus(player) == null || Menu.GetMenus(player)?.Count <= 0)))
+                SetPlayerMoveType(player, MoveType_t.MOVETYPE_WALK);
         }
 
+        var activeWeapon = player.PlayerPawn.Value!.WeaponServices!.ActiveWeapon.Value;
+
+        if(activeWeapon != null && activeWeapon.IsValid)
+        {
+            activeWeapon.NextPrimaryAttackTick = -1;
+            Utilities.SetStateChanged(activeWeapon, "CBasePlayerWeapon", "m_nNextPrimaryAttackTick");
+            activeWeapon.NextSecondaryAttackTick = -1;
+            Utilities.SetStateChanged(activeWeapon, "CBasePlayerWeapon", "m_nNextSecondaryAttackTick");
+        }
+
+        g_PlayerSettings[steamID].PlayerAlpha = 255;
         g_PlayerSettings[steamID].CameraProp = null;
         g_PlayerSettings[steamID].AnimProp = null;
 
@@ -603,18 +663,27 @@ public partial class Plugin
     {
         if(!player.IsValidPlayer() || !player.PlayerPawn.IsValidPawnAlive())
             return;
-
+        
         player.PlayerPawn.Value!.Render = Color.FromArgb(0, 255, 255, 255);
         Utilities.SetStateChanged(player.PlayerPawn.Value, "CBaseModelEntity", "m_clrRender");
     }
 
-    public static void SetPlayerVisible(CCSPlayerController player)
+    public void SetPlayerVisible(CCSPlayerController player)
     {
         if(!player.IsValidPlayer() || !player.PlayerPawn.IsValidPawnAlive())
             return;
 
-        player.PlayerPawn.Value!.Render = Color.FromArgb(255, 255, 255, 255);
-        Utilities.SetStateChanged(player.PlayerPawn.Value, "CBaseModelEntity", "m_clrRender");
+        var steamID = player.SteamID;
+        if(g_PlayerSettings.ContainsKey(steamID))
+        {
+            player.PlayerPawn.Value!.Render = Color.FromArgb(g_PlayerSettings[steamID].PlayerAlpha, 255, 255, 255);
+            Utilities.SetStateChanged(player.PlayerPawn.Value, "CBaseModelEntity", "m_clrRender");
+        }
+        else
+        {
+            player.PlayerPawn.Value!.Render = Color.FromArgb(255, 255, 255, 255);
+            Utilities.SetStateChanged(player.PlayerPawn.Value, "CBaseModelEntity", "m_clrRender");
+        }
     }
 
     public static void SetPlayerMoveType(CCSPlayerController player, MoveType_t type)
@@ -838,7 +907,8 @@ internal static class CCSPlayerControllerEx
         && controller.Entity.Handle != IntPtr.Zero
         && controller.IsValid
         && controller.Connected == PlayerConnectedState.PlayerConnected
-        && !controller.IsHLTV;
+        && !controller.IsHLTV
+        && !controller.IsBot;
 	}
 }
 
@@ -851,8 +921,7 @@ internal static class CHandleCCSPlayerPawnEx
         && pawn.Value != null
         && pawn.Value.IsValid
         && pawn.Value.WeaponServices != null
-        && pawn.Value.WeaponServices.MyWeapons != null
-        && pawn.Value.ItemServices != null;
+        && pawn.Value.WeaponServices.MyWeapons != null;
 	}
 
     internal static bool IsValidPawnAlive(this CHandle<CCSPlayerPawn>? pawn)

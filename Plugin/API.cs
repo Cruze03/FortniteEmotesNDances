@@ -4,7 +4,7 @@ using FortniteEmotes.API;
 
 namespace FortniteEmotes;
 
-public partial class  Plugin
+public partial class Plugin
 {
     public PluginCapability<IFortniteEmotesAPI> g_PluginCapability = new("FortniteEmotes");
     public IFortniteEmotesAPI FortniteEmotesApi { get; private set; } = null!;
@@ -19,12 +19,22 @@ public partial class  Plugin
 public class FortniteEmotesApi : IFortniteEmotesAPI
 {
     public Plugin plugin;
+
+    public event IFortniteEmotesAPI.OnPlayerEmoteFunc? OnPlayerEmotePre;
     
     public FortniteEmotesApi(Plugin plugin)
     {
         this.plugin = plugin;
     }
 
+    public HookResult OnPlayerEmote(CCSPlayerController player, Emote emote)
+    {
+        if(OnPlayerEmotePre == null)
+            return HookResult.Continue;
+        
+        return OnPlayerEmotePre.Invoke(player, emote);
+    }
+    
     public bool PlayEmote(CCSPlayerController player, string emote, ref string error)
     {
         var emoteObj = plugin.GetEmoteByName(emote, true);

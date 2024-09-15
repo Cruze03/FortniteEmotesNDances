@@ -38,7 +38,25 @@ public partial class Plugin
             else if(!isDance && !emote.IsEmote)
                 continue;
             
-            bool hasPerm = string.IsNullOrEmpty(emote.Permission) || AdminManager.PlayerHasPermissions(player, emote.Permission);
+            bool hasPerm = false;
+            foreach(var perm in emote.Permission)
+            {
+                if(string.IsNullOrEmpty(perm))
+                {
+                    hasPerm = true;
+                    break;
+                }
+                if(perm[0] == '@' && AdminManager.PlayerHasPermissions(player, perm))
+                {
+                    hasPerm = true;
+                    break;
+                }
+                else if(perm[0] == '#' && AdminManager.PlayerInGroup(player, perm))
+                {
+                    hasPerm = true;
+                    break;
+                }
+            }
             
             items.Add(new MenuItem(hasPerm ? MenuItemType.Button : MenuItemType.Text, [new MenuValue(Localizer[emote.Name])]));
             emoteMap[i++] = Localizer[emote.Name];
@@ -64,7 +82,8 @@ public partial class Plugin
                 string error = "";
                 if(!PlayEmote(player, emote, ref error))
                 {
-                    player.PrintToChat(error);
+                    if(!string.IsNullOrEmpty(error))
+                        player.PrintToChat(error);
                 }
             }
         }, false, freezePlayer: true, disableDeveloper: !Config.KitsuneMenuDeveloperDisplay);
@@ -90,7 +109,8 @@ public partial class Plugin
             string error = "";
             if(!PlayEmote(player, emote, ref error))
             {
-                player.PrintToChat(error);
+                if(!string.IsNullOrEmpty(error))
+                    player.PrintToChat(error);
             }
         };
 
@@ -101,7 +121,25 @@ public partial class Plugin
             else if(!isDance && !emote.IsEmote)
                 continue;
             
-            bool hasPerm = string.IsNullOrEmpty(emote.Permission) || AdminManager.PlayerHasPermissions(player, emote.Permission);
+            bool hasPerm = false;
+            foreach(var perm in emote.Permission)
+            {
+                if(string.IsNullOrEmpty(perm))
+                {
+                    hasPerm = true;
+                    break;
+                }
+                if(perm[0] == '@' && AdminManager.PlayerHasPermissions(player, perm))
+                {
+                    hasPerm = true;
+                    break;
+                }
+                else if(perm[0] == '#' && AdminManager.PlayerInGroup(player, perm))
+                {
+                    hasPerm = true;
+                    break;
+                }
+            }
             
             string emoteName = $"{Localizer[$"{emote.Name}"]}";
             
@@ -142,7 +180,25 @@ public partial class Plugin
             else if(!isDance && !emote.IsEmote)
                 continue;
             
-            bool hasPerm = string.IsNullOrEmpty(emote.Permission) || AdminManager.PlayerHasPermissions(player, emote.Permission);
+            bool hasPerm = false;
+            foreach(var perm in emote.Permission)
+            {
+                if(string.IsNullOrEmpty(perm))
+                {
+                    hasPerm = true;
+                    break;
+                }
+                if(perm[0] == '@' && AdminManager.PlayerHasPermissions(player, perm))
+                {
+                    hasPerm = true;
+                    break;
+                }
+                else if(perm[0] == '#' && AdminManager.PlayerInGroup(player, perm))
+                {
+                    hasPerm = true;
+                    break;
+                }
+            }
             
             string emoteName = $"{Localizer[$"{emote.Name}"]}";
             
