@@ -4,9 +4,23 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	  <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <OutputPath>..\Plugin\FortniteEmotesNDances\shared\FortniteEmotesNDancesAPI</OutputPath>
+    <PublishDir>..\Plugin\FortniteEmotesNDances\shared\FortniteEmotesNDancesAPI</PublishDir>
+    <OutputPath>$(PublishDir)</OutputPath>
   </PropertyGroup>
+
+  <Target Name="CleanUpAfterBuild" AfterTargets="Publish">
+    <ItemGroup>
+      <FilesToDelete Include="$(PublishDir)\**\*.dll" Exclude="$(PublishDir)\FortniteEmotesNDancesAPI.dll" />
+      <FilesToDelete Include="$(PublishDir)\runtimes\**\*" />
+    </ItemGroup>
+
+    <Delete Files="@(FilesToDelete)" />
+    <RemoveDir Directories="$(PublishDir)\runtimes" />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="CounterStrikeSharp.API" Version="*" />

@@ -5,9 +5,27 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-    <OutputPath>./FortniteEmotesNDances/plugins/FortniteEmotesNDances</OutputPath>
+	  <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+    <GenerateDependencyFile>false</GenerateDependencyFile>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <PublishDir>./FortniteEmotesNDances/plugins/FortniteEmotesNDances</PublishDir>
+    <OutputPath>$(PublishDir)</OutputPath>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <CustomSourceDir>./gamedata</CustomSourceDir>
+    <CustomTargetDir>$(PublishDir)../../../gamedata</CustomTargetDir>
+  </PropertyGroup>
+
+  <Target Name="CopyCustomDirectory" AfterTargets="Publish">
+    <MakeDir Directories="$(CustomTargetDir)" />
+    <Copy SourceFiles="@(CustomSourceFiles)" DestinationFolder="$(CustomTargetDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <ItemGroup>
+    <CustomSourceFiles Include="$(CustomSourceDir)\**\*.*" />
+  </ItemGroup>
 
  <ItemGroup>
     <PackageReference Include="CounterStrikeSharp.API" Version="*" />
@@ -17,16 +35,17 @@
 	   <ExcludeAssets>runtime</ExcludeAssets>
        <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </Reference>
+    
     <Reference Include="KitsuneMenu">
       <HintPath>FortniteEmotesNDances/shared/KitsuneMenu/KitsuneMenu.dll</HintPath>
     </Reference>
 	<ProjectReference Include="..\API\FortniteEmotesNDancesAPI.csproj">
       <Private>false</Private>
     </ProjectReference>
-  </ItemGroup>
+</ItemGroup>
 
-  <ItemGroup>
-    <None Update="lang\**\*.*" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
+<ItemGroup>
+  <None Update="lang\**\*.*" CopyToOutputDirectory="PreserveNewest" />
+</ItemGroup>
   
 </Project>
