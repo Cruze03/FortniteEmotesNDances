@@ -4,7 +4,7 @@ This plugin allows players to use Emotes & Dances Fortnite.
 
 **This took a *lot* of trial-and-error to find the best way to use thirdperson and a *lot* of effort create config file with each emote / dance. Sponsor if you would like to support me :)**
 
-[![Watch Preview Video](https://raw.githubusercontent.com/cruze03/FortniteEmotesNDances/main/git_assets/preview_menu.png)](https://www.youtube.com/watch?v=hNeWEU2_Qss)
+[![Watch Preview Video](https://raw.githubusercontent.com/cruze03/FortniteEmotesNDances/main/git_assets/preview_emotes.gif)](https://www.youtube.com/watch?v=hNeWEU2_Qss)
 
 ## Commands
 - `css_emotes` - Open emotes menu.
