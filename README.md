@@ -6,6 +6,10 @@ This plugin allows players to use Emotes & Dances Fortnite.
 
 [![Watch Preview Video](https://raw.githubusercontent.com/cruze03/FortniteEmotesNDances/main/git_assets/preview_emotes.gif)](https://www.youtube.com/watch?v=hNeWEU2_Qss)
 
+<p align="center">
+  <a href="https://discord.com/invite/BuuC5yGq"><img src="https://discordapp.com/api/guilds/734350057431629925/widget.png?style=banner2" alt="CruzeCoding Discord"></a>
+</p>
+
 ## Commands
 - `css_emotes` - Open emotes menu.
 - `css_dances` - Open dances menu.
