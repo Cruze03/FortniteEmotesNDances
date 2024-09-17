@@ -9,13 +9,13 @@ public partial class Plugin
     public HookResult OnRoundPreStart(EventRoundPrestart @event, GameEventInfo @info)
     {
         g_bRoundEnd = false;
-        foreach(var player in g_PlayerSettings)
+        /*foreach(var player in g_PlayerSettings)
         {
             if(player.Value.IsDancing)
             {
                 player.Value.Reset();
             }
-        }
+        }*/
         return HookResult.Continue;
     }
 
