@@ -9,13 +9,13 @@ public partial class Plugin
     public HookResult OnRoundPreStart(EventRoundPrestart @event, GameEventInfo @info)
     {
         g_bRoundEnd = false;
-        /*foreach(var player in g_PlayerSettings)
+        foreach(var player in g_PlayerSettings)
         {
             if(player.Value.IsDancing)
             {
                 player.Value.Reset();
             }
-        }*/
+        }
         return HookResult.Continue;
     }
 
@@ -55,11 +55,11 @@ public partial class Plugin
         if(player == null || !player.IsValid)
             return HookResult.Continue;
         
-        StopEmote(player);
+        StopEmote(player, true);
         
         if(Config.SmoothCamera)
         {
-            Server.NextWorldUpdate(()=> 
+            Server.NextWorldUpdate(() =>
             {
                 if(Config.EmoteMenuType == 2 && Menu.GetMenus(player) != null && Menu.GetMenus(player)?.Count > 0)
                     SetPlayerMoveType(player, MoveType_t.MOVETYPE_OBSOLETE);

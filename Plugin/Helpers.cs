@@ -177,6 +177,8 @@ public partial class Plugin
 
         SetPlayerWeaponInvisible(target);
 
+        RefreshPlayerGloves(target);
+
         g_PlayerSettings[steamID].EmoteModelIndex = prop.Index;
    
         prop.AcceptInput("SetAnimation", value: emote.AnimationName);
@@ -443,7 +445,7 @@ public partial class Plugin
         }
     }
 
-    public void StopEmote(CCSPlayerController player)
+    public void StopEmote(CCSPlayerController player, bool force = false)
     {
         if(!player.IsValidPlayer())
             return;
@@ -455,7 +457,7 @@ public partial class Plugin
         if(!g_PlayerSettings.TryGetValue(steamID, out var settings))
             return;
         
-        if(!g_PlayerSettings[steamID].IsDancing)
+        if(!g_PlayerSettings[steamID].IsDancing && !force)
             return;
         
         g_PlayerSettings[steamID].IsDancing = false;
@@ -698,9 +700,11 @@ public partial class Plugin
 
     private static void SetPlayerWeaponVisible(CCSPlayerController player)
     {
-        var playerPawnValue = player.PlayerPawn.Value;
         if(!player.IsValidPlayer() || !player.PlayerPawn.IsValidPawnAlive())
             return;
+        
+        var playerPawnValue = player.PlayerPawn.Value;
+        
         var activeWeapon = playerPawnValue!.WeaponServices?.ActiveWeapon.Value;
         if (activeWeapon != null && activeWeapon.IsValid)
         {
@@ -727,9 +731,10 @@ public partial class Plugin
 
     private static void SetPlayerWeaponInvisible(CCSPlayerController player)
     {
-        var playerPawnValue = player.PlayerPawn.Value;
         if(!player.IsValidPlayer() || !player.PlayerPawn.IsValidPawnAlive())
             return;
+        
+        var playerPawnValue = player.PlayerPawn.Value;
 
         var activeWeapon = playerPawnValue!.WeaponServices?.ActiveWeapon.Value;
         if (activeWeapon != null && activeWeapon.IsValid)
@@ -752,6 +757,24 @@ public partial class Plugin
                     Utilities.SetStateChanged(weapon, "CBaseModelEntity", "m_clrRender");
                 }
             }
+        }
+    }
+
+    private static void RefreshPlayerGloves(CCSPlayerController player)
+    {
+        if(!player.IsValidPlayer() || !player.PlayerPawn.IsValidPawnAlive())
+            return;
+
+        var playerPawnValue = player.PlayerPawn.Value;
+        if(playerPawnValue == null)
+            return;
+
+        // To refresh player gloves
+        var model = playerPawnValue.CBodyComponent?.SceneNode?.GetSkeletonInstance()?.ModelState.ModelName ?? string.Empty;
+        if (!string.IsNullOrEmpty(model))
+        {
+            playerPawnValue.SetModel("characters/models/tm_jumpsuit/tm_jumpsuit_varianta.vmdl");
+            playerPawnValue.SetModel(model);
         }
     }
 
