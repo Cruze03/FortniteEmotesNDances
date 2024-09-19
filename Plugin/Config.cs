@@ -32,6 +32,9 @@ public partial class PluginConfig : BasePluginConfig
     [JsonPropertyName("EmoteFreezePlayer")]
     public bool EmoteFreezePlayer { get; set; } = true;
 
+    [JsonPropertyName("EmoteGlovesFix")]
+    public bool EmoteGlovesFix { get; set; } = true;
+
     [JsonPropertyName("EmoteCooldown")]
     public int EmoteCooldown { get; set; } = 20;
 

@@ -19,6 +19,10 @@ using FortniteEmotes.API;
 namespace FortniteEmotes;
 public partial class Plugin
 {
+    private static readonly MemoryFunctionWithReturn<nint, string, int, int> SetBodygroupFunc = new(GameData.GetSignature("CBaseModelEntity_SetBodygroup"));
+
+	private static readonly Func<nint, string, int, int> SetBodygroup = SetBodygroupFunc.Invoke;
+    
     public class PlayerSettings
     {
         public uint CloneModelIndex { get; set; } = 0;
@@ -496,6 +500,8 @@ public partial class Plugin
 
         SetPlayerWeaponVisible(player);
 
+        RefreshPlayerGloves(player, true);
+
         if(!Config.SmoothCamera)
         {
             SetPlayerEffects(player, false);
@@ -760,8 +766,11 @@ public partial class Plugin
         }
     }
 
-    private static void RefreshPlayerGloves(CCSPlayerController player)
+    private void RefreshPlayerGloves(CCSPlayerController player, bool update = false)
     {
+        if(!Config.EmoteGlovesFix)
+            return;
+        
         if(!player.IsValidPlayer() || !player.PlayerPawn.IsValidPawnAlive())
             return;
 
@@ -769,12 +778,16 @@ public partial class Plugin
         if(playerPawnValue == null)
             return;
 
-        // To refresh player gloves
         var model = playerPawnValue.CBodyComponent?.SceneNode?.GetSkeletonInstance()?.ModelState.ModelName ?? string.Empty;
         if (!string.IsNullOrEmpty(model))
         {
             playerPawnValue.SetModel("characters/models/tm_jumpsuit/tm_jumpsuit_varianta.vmdl");
             playerPawnValue.SetModel(model);
+        }
+
+        if(update)
+        {
+            SetBodygroup(playerPawnValue.Handle, "default_gloves", 1);
         }
     }
 
