@@ -126,7 +126,7 @@ public partial class Plugin
             return false;
         }
 
-        var result = FortniteEmotesApi.OnPlayerEmote(target, emote);
+        var result = FortniteEmotesApi.InvokeOnPlayerEmote(target, emote);
         if(result == HookResult.Handled || result == HookResult.Stop)
         {
             string message = $"{Localizer[$"emote.stoppedbyapi"]}";

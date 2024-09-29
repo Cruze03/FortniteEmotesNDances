@@ -12,7 +12,6 @@ public partial class Plugin
         * Credits of this whole transmit manager goes to xstage's HidePlayers plugin
     */
     
-    #region CCheckTransmitInfo
     [StructLayout(LayoutKind.Sequential)]
     public struct CCheckTransmitInfo
     {
@@ -27,7 +26,7 @@ public partial class Plugin
         private const int BITS_PER_INT = 32;
         private const int MAX_EDICTS = 1 << MAX_EDICT_BITS;
 
-        private uint* m_Ints;
+        private readonly uint* m_Ints;
 
         public void Clear(int bitNum)
         {
@@ -38,24 +37,14 @@ public partial class Plugin
             *pInt &= ~(uint)BitVec_Bit(bitNum);
         }
 
-        public bool IsBitSet(int bitNum)
-        {
-            if (!(bitNum >= 0 && bitNum < MAX_EDICTS))
-                return false;
-
-            uint* pInt = m_Ints + BitVec_Int(bitNum);
-            return  ( *pInt & BitVec_Bit( bitNum ) ) != 0 ;
-        }
-
         private int BitVec_Int(int bitNum) => bitNum >> LOG2_BITS_PER_INT;
         private int BitVec_Bit(int bitNum) => 1 << ((bitNum) & (BITS_PER_INT - 1));
     }
-    #endregion
     
     private readonly CSPlayerState[] _oldPlayerState = new CSPlayerState[65];
     private readonly INetworkServerService networkServerService = new();
-    private static readonly MemoryFunctionVoid<nint, nint, int, nint, int, short, int, bool> CheckTransmit = new(GameData.GetSignature("CheckTransmit"));
-    private static readonly MemoryFunctionVoid<nint, CSPlayerState> StateTransition = new(GameData.GetSignature("StateTransition"));
+    private static readonly MemoryFunctionVoid<nint, nint, int, nint, nint, nint, int, bool> CheckTransmit = new(GameData.GetSignature("CheckTransmit"));
+    private static readonly MemoryFunctionVoid<CCSPlayerPawn, CSPlayerState> StateTransition = new(GameData.GetSignature("StateTransition"));
 
 
     public void Transmit_OnLoad()
@@ -74,6 +63,11 @@ public partial class Plugin
             StateTransition.Unhook(Hook_StateTransition, HookMode.Post);
             CheckTransmit.Unhook(Hook_CheckTransmit, HookMode.Post);
         }
+    }
+
+    public void Transmit_OnPlayerConnectFull(CCSPlayerController player)
+    {
+        _oldPlayerState[player.Index] = CSPlayerState.STATE_WELCOME;
     }
 
     private void ForceFullUpdate(CCSPlayerController? player)
@@ -99,29 +93,29 @@ public partial class Plugin
             var player = Utilities.GetPlayerFromSlot(slot);
             var info = Marshal.PtrToStructure<CCheckTransmitInfo>(pInfo);
 
-            if (!player.IsValidPlayer() || !player!.PlayerPawn.IsValidPawnAlive())
+            if (!player.IsValidPlayer())
                 continue;
             
-            var steamID = player.SteamID;
+            var steamID = player!.SteamID;
 
-            foreach (var target in Utilities.GetPlayers()
-                .Where(p => p != null && p.PlayerPawn.Value != null))
+            foreach (var target in Utilities.GetPlayers())
             {
+                if (target == null || target.IsHLTV || target.Slot == slot)
+                    continue;
+
                 var pawn = target.PlayerPawn.Value!;
 
-                #region fix client crash
-                if (target.Slot == slot && ((LifeState_t)pawn.LifeState != LifeState_t.LIFE_DEAD || pawn.PlayerState.HasFlag(CSPlayerState.STATE_DEATH_ANIM)))
+                if (player.Pawn.Value?.As<CCSPlayerPawnBase>().PlayerState == CSPlayerState.STATE_OBSERVER_MODE)
                     continue;
-
-                if (player.PlayerPawn.Value!.PlayerState.HasFlag(CSPlayerState.STATE_DORMANT) && target.Slot != slot)
+                
+                if (pawn == null)
                     continue;
-
+                
                 if ((LifeState_t)pawn.LifeState != LifeState_t.LIFE_ALIVE)
                 {
                     info.m_pTransmitEntity.Clear((int)pawn.Index);
                     continue;
                 }
-                #endregion
 
                 if(!g_PlayerSettings.ContainsKey(steamID))
                     continue;
@@ -151,19 +145,17 @@ public partial class Plugin
 
     private HookResult Hook_StateTransition(DynamicHook hook)
     {
-        var pawn = new CCSPlayerPawn(hook.GetParam<nint>(0));
-
-        if (!pawn.IsValid) return HookResult.Continue;
-
-        var player = pawn.OriginalController.Value;
+        var player = hook.GetParam<CCSPlayerPawn>(0).OriginalController.Value;
         var state = hook.GetParam<CSPlayerState>(1);
 
         if (player is null) return HookResult.Continue;
 
-        if (_oldPlayerState[player.Index] != CSPlayerState.STATE_OBSERVER_MODE && state == CSPlayerState.STATE_OBSERVER_MODE ||
-            _oldPlayerState[player.Index] == CSPlayerState.STATE_OBSERVER_MODE && state != CSPlayerState.STATE_OBSERVER_MODE)
+        if (state != _oldPlayerState[player.Index])
         {
-            ForceFullUpdate(player);
+            if (state == CSPlayerState.STATE_OBSERVER_MODE || _oldPlayerState[player.Index] == CSPlayerState.STATE_OBSERVER_MODE)
+            {
+                ForceFullUpdate(player);
+            }
         }
 
         _oldPlayerState[player.Index] = state;

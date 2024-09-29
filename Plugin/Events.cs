@@ -99,4 +99,17 @@ public partial class Plugin
         }
         return HookResult.Continue;
     }
+
+    [GameEventHandler]
+    public HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo @info)
+    {
+        var player = @event.Userid;
+
+        if(player == null || !player.IsValid)
+            return HookResult.Continue;
+        
+        Transmit_OnPlayerConnectFull(player);
+        
+        return HookResult.Continue;
+    }
 }

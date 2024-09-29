@@ -7,7 +7,7 @@ namespace FortniteEmotes;
 public partial class Plugin
 {
     public PluginCapability<IFortniteEmotesAPI> g_PluginCapability = new("FortniteEmotes");
-    public IFortniteEmotesAPI FortniteEmotesApi { get; private set; } = null!;
+    public FortniteEmotesApi FortniteEmotesApi { get; private set; } = null!;
 
     public void API_OnLoad()
     {
@@ -27,7 +27,7 @@ public class FortniteEmotesApi : IFortniteEmotesAPI
         this.plugin = plugin;
     }
 
-    public HookResult OnPlayerEmote(CCSPlayerController player, Emote emote)
+    public HookResult InvokeOnPlayerEmote(CCSPlayerController player, Emote emote)
     {
         if(OnPlayerEmotePre == null)
             return HookResult.Continue;

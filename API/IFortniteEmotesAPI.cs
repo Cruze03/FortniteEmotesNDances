@@ -49,12 +49,13 @@ public class Emote
 public interface IFortniteEmotesAPI
 {
 	delegate HookResult OnPlayerEmoteFunc(CCSPlayerController player, Emote emote);
-    
+
     /// <summary>
     /// Is called when a player tries to play an emote/dance
+    /// HookResult.Handled || HookResult.Stop will stop emote/dance from playing
     /// </summary>
     /// <param name="handler">Forward when emote/dance is about to be played</param>
-    public HookResult OnPlayerEmote(CCSPlayerController player, Emote emote);
+    public event OnPlayerEmoteFunc? OnPlayerEmotePre;
     
     /// <summary>
     /// if emote is unable to be played, will return false
