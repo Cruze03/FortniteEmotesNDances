@@ -23,7 +23,7 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
     public override string ModuleName => "Fortnite Emotes & Dances";
     public override string ModuleDescription => "CS2 Port of Fortnite Emotes & Dances";
     public override string ModuleAuthor => "Cruze";
-    public override string ModuleVersion => "1.0.3";
+    public override string ModuleVersion => "1.0.4";
 
     public required PluginConfig Config { get; set; } = new();
 
@@ -647,6 +647,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
             resource.AddResource(emote.Model);
             precachedModels.Add(emote.Model);
         }
+
+        resource.AddResource("models/chicken/chicken.vmdl"); // Needs precache in non-competitive maps
     }
 
     [ConsoleCommand("css_etrigger", "Displays all chat triggers for emotes/dance")]

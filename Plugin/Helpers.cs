@@ -28,6 +28,7 @@ public partial class Plugin
         public uint CloneModelIndex { get; set; } = 0;
         public uint EmoteModelIndex { get; set; } = 0;
         public int PlayerAlpha { get; set; } = 255;
+        public MoveType_t PlayerMoveType { get; set; } = MoveType_t.MOVETYPE_WALK;
         public CDynamicProp? CameraProp { get; set; } = null;
         public CDynamicProp? AnimProp { get; set; } = null;
         public uint CameraPropIndex { get; set; } = 0;
@@ -44,6 +45,7 @@ public partial class Plugin
             AnimProp = null;
             EmoteModelIndex = 0;
             PlayerAlpha = 255;
+            PlayerMoveType = MoveType_t.MOVETYPE_WALK;
             CameraProp = null;
             CameraPropIndex = 0;
             Cooldown = 0;
@@ -60,6 +62,7 @@ public partial class Plugin
             CloneModelIndex = 0;
             EmoteModelIndex = 0;
             PlayerAlpha = 255;
+            PlayerMoveType = MoveType_t.MOVETYPE_WALK;
             CameraProp = null;
             CameraPropIndex = 0;
             IsDancing = false;
@@ -120,11 +123,21 @@ public partial class Plugin
             return false;
         }
 
-        if(!target.PlayerPawn.Value.OnGroundLastTick)
+        if(target.Pawn.IsValidPawn())
         {
-            error = $" {Localizer["emote.prefix"]} {Localizer[$"emote{(player == null ? "":".player")}.groundcheck"]}";
-            return false;
+            if(((PlayerFlags)target.Pawn.Value!.Flags & PlayerFlags.FL_ONGROUND) != PlayerFlags.FL_ONGROUND || (target.PlayerPawn.Value.GroundEntity != null && target.PlayerPawn.Value.GroundEntity.IsValid && target.PlayerPawn.Value.GroundEntity.Index != 0))
+            {
+                error = $" {Localizer["emote.prefix"]} {Localizer[$"emote{(player == null ? "":".player")}.groundcheck"]}";
+                return false;
+            }
+            if(((PlayerFlags)target.Pawn.Value!.Flags & PlayerFlags.FL_DUCKING) == PlayerFlags.FL_DUCKING)
+            {
+                error = $" {Localizer["emote.prefix"]} {Localizer[$"emote{(player == null ? "":".player")}.duckcheck"]}";
+                return false;
+            }
         }
+
+        // DebugLogs($"GroundEntity Info: {(target.PlayerPawn.Value.GroundEntity == null ? "null" : "not-null")} | {target.PlayerPawn.Value.GroundEntity?.IsValid ?? false} | {target.PlayerPawn.Value.GroundEntity?.Index ?? 1337420}");
 
         var result = FortniteEmotesApi.InvokeOnPlayerEmote(target, emote);
         if(result == HookResult.Handled || result == HookResult.Stop)
@@ -158,6 +171,8 @@ public partial class Plugin
 
         string propName = "emoteEnt_" + new Random().Next(1000000, 9999999).ToString();
         prop.Entity.Name = propName;
+
+        prop.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= unchecked((uint)~(1 << 2));
         
         prop.SetModel(emote.Model);
 
@@ -303,32 +318,37 @@ public partial class Plugin
         {
             return null;
         }
-
-        Server.PrecacheModel(model);
         
         CDynamicProp? clone = Utilities.CreateEntityByName<CDynamicProp>("prop_dynamic");
         if (clone == null || clone.Entity == null || clone.Entity.Handle == IntPtr.Zero || !clone.IsValid)
         {
             return null;
         }
-        
-        clone.SetModel(model);
 
         clone.Entity.Name = propName+"_clone";
+        clone.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= unchecked((uint)~(1 << 2));
+        clone.SetModel(model);
         SetCollision(clone, CollisionGroup.COLLISION_GROUP_NEVER, SolidType_t.SOLID_NONE, 12);
         clone.DispatchSpawn();
         clone.Teleport(player.PlayerPawn.Value!.AbsOrigin, player.PlayerPawn.Value.AbsRotation, null);
         clone.UseAnimGraph = false;
+
         clone.AcceptInput("FollowEntity", prop, prop, propName);
+        
+        var steamID = player.SteamID;
+        
         if(Config.EmoteFreezePlayer)
+        {
+            if(g_PlayerSettings.ContainsKey(steamID))
+                g_PlayerSettings[steamID].PlayerMoveType = player.PlayerPawn.Value.ActualMoveType;
             SetPlayerMoveType(player, MoveType_t.MOVETYPE_OBSOLETE);
+        }
         
         clone.Render = Color.FromArgb(255, 255, 255, 255);
         Utilities.SetStateChanged(clone, "CBaseModelEntity", "m_clrRender");
 
         Server.NextWorldUpdate(() =>
         {
-            var steamID = player.SteamID;
             if(g_PlayerSettings.ContainsKey(steamID))
                 g_PlayerSettings[steamID].PlayerAlpha = player.PlayerPawn.Value!.Render.A;
             SetPlayerInvisible(player);
@@ -404,10 +424,15 @@ public partial class Plugin
         if(!player.IsValidPlayer() || !player.PlayerPawn.IsValidPawnAlive())
             return false;
         
-        if(!player.PlayerPawn.Value!.OnGroundLastTick)
-            return false;
+        if(player.Pawn.IsValidPawn())
+        {
+            if(((PlayerFlags)player.Pawn.Value!.Flags & PlayerFlags.FL_ONGROUND) != PlayerFlags.FL_ONGROUND || (player.PlayerPawn.Value!.GroundEntity != null && player.PlayerPawn.Value.GroundEntity.IsValid && player.PlayerPawn.Value.GroundEntity.Index != 0))
+                return false;
+            if(((PlayerFlags)player.Pawn.Value!.Flags & PlayerFlags.FL_DUCKING) == PlayerFlags.FL_DUCKING)
+                return false;
+        }
 
-        if(player.PlayerPawn.Value.IsScoped)
+        if(player.PlayerPawn.Value!.IsScoped)
             return false;
         
         var steamID = player.SteamID;
@@ -500,8 +525,6 @@ public partial class Plugin
 
         SetPlayerWeaponVisible(player);
 
-        RefreshPlayerGloves(player, true);
-
         if(!Config.SmoothCamera)
         {
             SetPlayerEffects(player, false);
@@ -509,9 +532,15 @@ public partial class Plugin
         else
         {
             SetPlayerVisible(player);
-            if(Config.EmoteMenuType != 2 || (Config.EmoteMenuType == 2 && (Menu.GetMenus(player) == null || Menu.GetMenus(player)?.Count <= 0)))
-                SetPlayerMoveType(player, MoveType_t.MOVETYPE_WALK);
+            
+            if(g_PlayerSettings.ContainsKey(steamID)
+            && (Config.EmoteMenuType != 2 || (Config.EmoteMenuType == 2 && (Menu.GetMenus(player) == null || Menu.GetMenus(player)?.Count <= 0)))
+            && player.PlayerPawn.IsValidPawnAlive()
+            && g_PlayerSettings[steamID].PlayerMoveType != player.PlayerPawn.Value!.ActualMoveType)
+                SetPlayerMoveType(player, g_PlayerSettings[steamID].PlayerMoveType);
         }
+
+        RefreshPlayerGloves(player, true);
 
         var activeWeapon = player.PlayerPawn.Value!.WeaponServices!.ActiveWeapon.Value;
 
@@ -524,6 +553,7 @@ public partial class Plugin
         }
 
         g_PlayerSettings[steamID].PlayerAlpha = 255;
+        g_PlayerSettings[steamID].PlayerMoveType = MoveType_t.MOVETYPE_WALK;
         g_PlayerSettings[steamID].CameraProp = null;
         g_PlayerSettings[steamID].AnimProp = null;
 
@@ -576,25 +606,23 @@ public partial class Plugin
         if(!player.IsValidPlayer() || !player.PlayerPawn.IsValidPawnAlive() || player.AbsOrigin == null || player.PlayerPawn.Value!.CameraServices == null)
             return null;
 
-        var prop = Utilities.CreateEntityByName<CDynamicProp>("prop_dynamic");
+        CDynamicProp? prop = Utilities.CreateEntityByName<CDynamicProp>("prop_dynamic");
         if (prop == null)
             return null;
-
+        
         prop.Teleport(CalculatePositionInFront(player, -110, 75), player.PlayerPawn.Value.V_angle, new Vector());
 
         prop.Entity!.Name = "cameraProp_" + new Random().Next(1000000, 9999999).ToString();
+        prop.CBodyComponent!.SceneNode!.Owner!.Entity!.Flags &= unchecked((uint)~(1 << 2));
 
-        prop.Render = Color.FromArgb(0, (int)byte.MaxValue, (int)byte.MaxValue, (int)byte.MaxValue);
-        Utilities.SetStateChanged(prop, "CBaseModelEntity", "m_clrRender");
+        prop.SetModel("models/chicken/chicken.vmdl");
+
+        SetPropInvisible(prop);
         
         prop.DispatchSpawn();
         prop.Teleport(player.PlayerPawn.Value.AbsOrigin, player.PlayerPawn.Value.V_angle, new Vector());
 
-        SetCollision(prop, CollisionGroup.COLLISION_GROUP_NEVER, SolidType_t.SOLID_VPHYSICS, 12/*(byte)(SolidFlags_t.FSOLID_NOT_SOLID|SolidFlags_t.FSOLID_TRIGGER)*/);
-
-        //prop.MoveType = MoveType_t.MOVETYPE_OBSOLETE;
-        //prop.ActualMoveType = MoveType_t.MOVETYPE_OBSOLETE;
-        //Utilities.SetStateChanged(prop, "CBaseEntity", "m_MoveType");
+        SetCollision(prop, CollisionGroup.COLLISION_GROUP_NEVER, SolidType_t.SOLID_VPHYSICS, 12);
         
         Server.NextWorldUpdate(() =>
         {
@@ -787,7 +815,13 @@ public partial class Plugin
 
         if(update)
         {
-            SetBodygroup(playerPawnValue.Handle, "default_gloves", 1);
+            Server.NextWorldUpdate(() =>
+            {
+                if(playerPawnValue == null)
+                    return;
+                
+                SetBodygroup(playerPawnValue.Handle, "default_gloves", 1);
+            });
         }
     }
 
@@ -961,6 +995,22 @@ internal static class CHandleCCSPlayerPawnEx
 	}
 
     internal static bool IsValidPawnAlive(this CHandle<CCSPlayerPawn>? pawn)
+    {
+        return IsValidPawn(pawn) && pawn!.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE && pawn.Value.Health > 0;
+    }
+}
+
+internal static class CHandleCBasePlayerPawnEx
+{
+	internal static bool IsValidPawn(this CHandle<CBasePlayerPawn>? pawn)
+	{
+		return pawn != null
+        && pawn.IsValid
+        && pawn.Value != null
+        && pawn.Value.IsValid;
+	}
+
+    internal static bool IsValidPawnAlive(this CHandle<CBasePlayerPawn>? pawn)
     {
         return IsValidPawn(pawn) && pawn!.Value!.LifeState == (byte)LifeState_t.LIFE_ALIVE && pawn.Value.Health > 0;
     }
