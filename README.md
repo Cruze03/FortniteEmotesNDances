@@ -19,7 +19,7 @@ This plugin allows players to use Emotes & Dances Fortnite.
 
 ## Dependencies
 - [Metamod](https://www.metamodsource.net/downloads.php?branch=dev)
-- [CounterStrikeSharp v260+](https://github.com/roflmuffin/CounterStrikeSharp/releases/latest)
+- [CounterStrikeSharp v276+](https://github.com/roflmuffin/CounterStrikeSharp/releases/latest)
 - [MultiAddonManager](https://github.com/Source2ZE/MultiAddonManager/releases/latest)
 
 ## Installation
