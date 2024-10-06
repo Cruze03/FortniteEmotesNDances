@@ -23,6 +23,7 @@
     "emote.disabledbyadmin": "{lightred}Yetkili dans ve ifadeleri kapattı.",
     "emote.player.groundcheck": "{lightred}Bu ifadeyi kullanabilmek için hedefin yerde olması gerekiyor.",
     "emote.player.duckcheck": "{lightred}Hedeflediğin kişi eğildiği için bu komutu kullanamazsın.",
+    "emote.player.disabledbyadmin": "{lightred}Yetkili dans ve ifadeleri kapattı.",
     "emote.unknownerror": "{lightred}Bilinmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
     "emote.no-access": "{lightred}Bu ifadeye erişiminiz yok.",
     "emote.not-found": "{lightred}Bu isimle bir ifade bulunamadı.",
