@@ -20,6 +20,7 @@
     "emote.cooldowncheck": "You need to wait {lightred}{0} seconds{default} before using this command again.",
     "emote.groundcheck": "{lightred}You need to be on the ground to use this command.",
     "emote.duckcheck": "{lightred}You need to be standing to use this command.",
+    "emote.disabledbyadmin": "{lightred}Admin has disabled emotes/dances.",
     "emote.player.groundcheck": "{lightred}Target needs to be on the ground to use this emote.",
     "emote.player.duckcheck": "{lightred}Target needs to be standing to use this emote.",
     "emote.unknownerror": "{lightred}An unknown error occurred. Please try again later.",

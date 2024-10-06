@@ -17,13 +17,13 @@ using FortniteEmotes.API;
 
 namespace FortniteEmotes;
 
-[MinimumApiVersion(260)]
+[MinimumApiVersion(276)]
 public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
 {
     public override string ModuleName => "Fortnite Emotes & Dances";
     public override string ModuleDescription => "CS2 Port of Fortnite Emotes & Dances";
     public override string ModuleAuthor => "Cruze";
-    public override string ModuleVersion => "1.0.4";
+    public override string ModuleVersion => "1.0.5";
 
     public required PluginConfig Config { get; set; } = new();
 
@@ -40,6 +40,8 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
     private bool g_bRoundEnd = false;
 
     private CCSGameRules? g_GameRules = null;
+
+    public FakeConVar<bool> EmotesEnable = new("css_fortnite_emotes_enable", "ConVar to toggle emotes and dances", true);
 
     public void OnConfigParsed(PluginConfig config)
     {
@@ -406,6 +408,11 @@ public partial class Plugin : BasePlugin, IPluginConfig<PluginConfig>
         Menu_OnLoad();
         API_OnLoad();
         Transmit_OnLoad();
+
+        EmotesEnable.ValueChanged += (sender, value) =>
+        {
+            StopAllEmotes();
+        };
 
         if(hotReload)
         {

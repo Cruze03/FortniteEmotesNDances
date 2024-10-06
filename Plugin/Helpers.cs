@@ -155,6 +155,12 @@ public partial class Plugin
             return false;
         }
 
+        if(!EmotesEnable.Value)
+        {
+            error = $" {Localizer["emote.prefix"]} {Localizer[$"emote{(player == null ? "":".player")}.disabledbyadmin"]}";
+            return false;
+        }
+
         if(g_PlayerSettings[steamID].IsDancing)
         {
             DebugLogs("Player already dancing, stopping emote");
@@ -283,6 +289,7 @@ public partial class Plugin
             g_PlayerSettings[steamID].SoundTimer?.Kill();
             if(!string.IsNullOrEmpty(emote.Sound))
             {
+                DebugLogs("SoundPlayed: " + emote.Sound);
                 EmitSound(target, emote.Sound, emote.SoundVolume);
                 if(emote.LoopSoundAfterSeconds > 0)
                 {
@@ -294,6 +301,7 @@ public partial class Plugin
                             return;
                         }
                         
+                        DebugLogs("SoundPlayed: " + emote.Sound);
                         EmitSound(target, emote.Sound, emote.SoundVolume);
                     }, TimerFlags.REPEAT|TimerFlags.STOP_ON_MAPCHANGE);
                 }
@@ -340,7 +348,7 @@ public partial class Plugin
         if(Config.EmoteFreezePlayer)
         {
             if(g_PlayerSettings.ContainsKey(steamID))
-                g_PlayerSettings[steamID].PlayerMoveType = player.PlayerPawn.Value.ActualMoveType;
+                g_PlayerSettings[steamID].PlayerMoveType = Config.EmoteMenuType == 2 && Menu.GetMenus(player) != null && Menu.GetMenus(player)?.Count > 0 ? MoveType_t.MOVETYPE_WALK :  player.PlayerPawn.Value.ActualMoveType;
             SetPlayerMoveType(player, MoveType_t.MOVETYPE_OBSOLETE);
         }
         
